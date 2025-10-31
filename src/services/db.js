@@ -142,12 +142,25 @@ const orderSchema = new mongoose.Schema({
     default: 'pending',
     index: true  // Index for status filtering
   },
+  // Order type: pickup, delivery, or dinein
+  type: {
+    type: String,
+    enum: ['pickup', 'delivery', 'dinein'],
+    default: 'delivery',
+    index: true
+  },
   instructions: String,
   createdAt: { type: Date, default: Date.now, index: true }, // Index for sorting by date
 });
 
-export const Order =
-  mongoose.models.Order || mongoose.model('Order', orderSchema);
+// Note: legacy 'Order' model (plural 'orders' collection) is deprecated.
+// We use `OrderNew` which writes to the singular 'order' collection to
+// ensure the current schema (including `type`) is respected.
+
+// New model that writes to explicit 'order' collection (singular) to avoid
+// conflicts with the existing 'orders' collection compiled previously.
+export const OrderNew =
+  mongoose.models.OrderNew || mongoose.model('OrderNew', orderSchema, 'order');
 
 //
 // 🧾 OPTIMIZED CRUD Functions ───────────────────────────────────────────────
@@ -226,8 +239,103 @@ export async function getMenuItem(id) {
 export async function createOrder(orderData) {
   await connectToDB();
   
-  const order = new Order(orderData);
+  const order = new OrderNew(orderData);
   await order.save();
-  
+
+  // Ensure `type` persisted (handles cases where model was compiled without the field)
+  if ((!order.type || order.type === undefined) && orderData.type) {
+    order.type = orderData.type
+    await order.save()
+  }
+
   return order.toObject(); // Return plain object
+}
+
+// 📋 Get all orders with filtering options
+export async function getAllOrders(filters = {}) {
+  await connectToDB();
+  
+  const query = {};
+  if (filters.status) query.status = filters.status;
+  if (filters.startDate) query.createdAt = { $gte: new Date(filters.startDate) };
+  if (filters.endDate) query.createdAt = { ...query.createdAt, $lte: new Date(filters.endDate) };
+  
+  return await OrderNew
+    .find(query)
+    .sort({ createdAt: -1 })
+    .lean()
+    .exec();
+}
+
+// 🔄 Update order status
+export async function updateOrderStatus(orderId, newStatus) {
+  await connectToDB();
+  
+  const validStatuses = ['pending', 'accepted', 'preparing', 'prepared', 'delivering', 'delivered', 'declined'];
+  if (!validStatuses.includes(newStatus)) {
+    throw new Error('Invalid status');
+  }
+  
+  const order = await OrderNew.findByIdAndUpdate(
+    orderId,
+    { 
+      $set: { 
+        status: newStatus,
+        updatedAt: new Date()
+      } 
+    },
+    { new: true }
+  ).lean();
+  
+  if (!order) throw new Error('Order not found');
+  return order;
+}
+
+// 🔍 Get order by ID
+export async function getOrderById(orderId) {
+  await connectToDB();
+  
+  const order = await OrderNew.findById(orderId).lean();
+  if (!order) throw new Error('Order not found');
+  return order;
+}
+
+// 📊 Get order statistics
+export async function getOrderStats(timeframe = '24h') {
+  await connectToDB();
+  
+  const query = {};
+  if (timeframe === '24h') {
+    query.createdAt = { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) };
+  } else if (timeframe === '7d') {
+    query.createdAt = { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
+  } else if (timeframe === '30d') {
+    query.createdAt = { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
+  }
+  
+  const [orders, stats] = await Promise.all([
+    OrderNew.find(query).lean(),
+    OrderNew.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          totalAmount: { $sum: '$total' }
+        }
+      }
+    ])
+  ]);
+  
+  return {
+    totalOrders: orders.length,
+    totalAmount: orders.reduce((sum, order) => sum + (order.total || 0), 0),
+    byStatus: stats.reduce((acc, stat) => {
+      acc[stat._id] = {
+        count: stat.count,
+        amount: stat.totalAmount
+      };
+      return acc;
+    }, {})
+  };
 }

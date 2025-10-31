@@ -230,10 +230,10 @@ export default function CartOverlay({ products = [], onCartUpdated } = {}) {
                             <span className="text-sm font-medium w-6 text-center">{it.quantity}</span>
                             <button
                               onClick={() => updateQuantity(it.cartItemId ?? it.id, it.menuItemId, it.quantity, 1)}
-                              className="w-7 h-7 rounded border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50"
+                              className="w-7 h-7 rounded border border-neutral-200 bg-white flex items-center justify-center text-neutral-700 hover:bg-neutral-50"
                               disabled={updatingIds.includes(it.cartItemId ?? it.id)}
                             >
-                              <span className="text-sm">+</span>
+                              <span className="text-sm text-neutral-700">+</span>
                             </button>
                           </div>
                           <span className="font-semibold text-sm">Rs {(it.price * it.quantity).toFixed(0)}</span>
