@@ -24,6 +24,20 @@ const nextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = [...(config.externals || []), 'ws']
+    }
+    return config
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/ws',
+        destination: '/api/ws',
+      },
+    ]
+  },
 };
 
 module.exports = nextConfig;

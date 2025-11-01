@@ -2,6 +2,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ArrowLeft, ArrowRight, Check, X, ShoppingCart, MapPin, ShieldCheck, CheckCircle, Bike, ShoppingBag, Phone, Crosshair, Banknote, Mail, Info, Home, Map } from 'lucide-react'
 import emailjs from '@emailjs/browser'
@@ -9,7 +10,6 @@ import CartSummary from './CartSummary'
 import PaymentSummary from './PaymentSummary'
 import DeliveryForm from './DeliveryForm'
 import OTPVerification from './OTPVerification'
-import OrderSuccessModal from './OrderSuccessModal'
 
 export default function Checkout({ cart: initialCart, user = {}, onOrderPlaced }) {
   const [step, setStep] = useState(1)
@@ -27,9 +27,9 @@ export default function Checkout({ cart: initialCart, user = {}, onOrderPlaced }
   })
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [generatedOtp, setGeneratedOtp] = useState('')
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [orderData, setOrderData] = useState(null)
   const [verificationError, setVerificationError] = useState('')
+  const router = useRouter()
   const initialFormData = {
     name: '',
     phone: '',
@@ -173,13 +173,9 @@ export default function Checkout({ cart: initialCart, user = {}, onOrderPlaced }
 
       const order = await response.json()
       
-      // Show success modal
-      setOrderData({
-        id: order._id,
-        address: address,
-        total: total
-      })
-      setShowSuccessModal(true)
+  // Store full order and move to confirmation step (step 4)
+  setOrderData(order)
+  setStep(4)
       
       // Clear cart and form data
       clearCart()
@@ -359,15 +355,81 @@ export default function Checkout({ cart: initialCart, user = {}, onOrderPlaced }
         )}
       </main>
 
-      {showSuccessModal && orderData && (
-        <OrderSuccessModal
-          orderId={orderData.id}
-          address={orderData.address}
-          total={orderData.total}
-          onTrack={() => alert('Redirecting to order tracking...')}
-          onClose={() => alert('Redirecting to home page...')}
-        />
-      )}
+      
+
+        {step === 4 && orderData && (
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="space-y-6">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-10 h-10 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-semibold tracking-tight mb-2">Order Placed Successfully!</h2>
+              <p className="text-neutral-600">Your order has been confirmed and is being prepared</p>
+            </div>
+
+            <div className="bg-white rounded-xl border border-neutral-200 p-6 space-y-4">
+              <div className="flex items-center justify-between pb-4 border-b border-neutral-200">
+                <span className="text-sm text-neutral-600">Order Number</span>
+                <span className="font-semibold text-lg">{orderData._id}</span>
+              </div>
+              <div className="flex items-center justify-between pb-4 border-b border-neutral-200">
+                <span className="text-sm text-neutral-600">Estimated Delivery</span>
+                <span className="font-semibold">25-35 minutes</span>
+              </div>
+              <div className="pb-4 border-b border-neutral-200">
+                <div className="text-sm text-neutral-600">Delivery Address</div>
+                <div className="font-medium text-sm mt-1">{orderData.address || orderData.addressLine || ''}</div>
+              </div>
+
+              <div>
+                <div className="text-sm text-neutral-600 mb-2">Items</div>
+                <ul className="divide-y divide-neutral-100 rounded-md overflow-hidden border border-neutral-100">
+                  {(orderData.items || []).map((it, i) => (
+                    <li key={i} className="flex items-center justify-between px-4 py-3">
+                      <div>
+                        <div className="font-medium">{it.menuItem || it.name}</div>
+                        <div className="text-xs text-neutral-500">Qty: {it.quantity} • Rs {Number(it.price || 0).toFixed(0)}</div>
+                      </div>
+                      <div className="font-medium">Rs {Number((it.price || 0) * (it.quantity || 1)).toFixed(0)}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-neutral-600">Total Paid</span>
+                <span className="font-semibold text-xl">Rs {Number(orderData.total || 0).toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 flex gap-3">
+              <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-blue-900 mb-1">Track your order</p>
+                <p className="text-sm text-blue-700">We'll send you updates via Email/SMS. You can also track your order in real-time.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { router.push(`/orders/${orderData._id}`) }}
+                className="flex-1 py-4 bg-white border border-neutral-200 text-neutral-700 rounded-xl font-semibold hover:bg-neutral-50 transition-all flex items-center justify-center gap-2"
+              >
+                <Map className="w-5 h-5" />
+                Track Order
+              </button>
+              <button
+                onClick={() => { router.push('/'); }}
+                className="flex-1 py-4 bg-neutral-900 text-white rounded-xl font-semibold hover:bg-neutral-800 transition-all flex items-center justify-center gap-2"
+              >
+                <Home className="w-5 h-5" />
+                Back to Home
+              </button>
+            </div>
+            </div>
+          </div>
+        )}
     </div>
   )
 }
