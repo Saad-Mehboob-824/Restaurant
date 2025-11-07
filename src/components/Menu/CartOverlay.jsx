@@ -63,8 +63,14 @@ export default function CartOverlay({ products = [], onCartUpdated } = {}) {
       const menuItemId = menuItemObj ? (menuItemObj._id || menuItemObj.id) : (it.menuItem || it._localItem?.menuItemId);
       const productFromList = products.find((p) => p._id === menuItemId);
       const name = menuItemObj?.name || productFromList?.name || it._localItem?.product?.name || "Item";
-      const price = Number(menuItemObj?.price ?? productFromList?.price ?? it._localItem?.product?.price ?? 0);
+      // Use price from cart item if available (includes variant/sides pricing), otherwise use base price
+      const basePrice = Number(it._localItem?.price ?? menuItemObj?.price ?? productFromList?.price ?? it._localItem?.product?.price ?? 0);
+      const price = basePrice;
       const image = menuItemObj?.image || productFromList?.image || it._localItem?.product?.image || "/shopping-cart.svg";
+      
+      // Extract variant and selectedSides from raw cart item
+      const variant = it._localItem?.variant || it.raw?.variant || '';
+      const selectedSides = it._localItem?.selectedSides || it.raw?.selectedSides || [];
 
       return {
         id: it.cartItemId ?? menuItemId,
@@ -74,6 +80,8 @@ export default function CartOverlay({ products = [], onCartUpdated } = {}) {
         price,
         quantity: it.quantity ?? 1,
         image,
+        variant,
+        selectedSides,
         raw: it.raw ?? it,
       };
     });
@@ -146,12 +154,14 @@ export default function CartOverlay({ products = [], onCartUpdated } = {}) {
       // Prepare a lightweight cart payload for the checkout page
       const cartForCheckout = displayItems.map((it) => ({
         id: it.menuItemId || it.id,
+        menuItemId: it.menuItemId || it.id, // Preserve menuItemId for order creation
         name: it.name,
-        description: it.raw?.product?.description || '',
+        description: it.raw?.product?.description || it.raw?.description || '',
         imageUrl: it.image,
         price: it.price,
         quantity: it.quantity,
-        selectedSides: it.raw?.selectedSides || [],
+        variant: it.raw?.variant || '', // Preserve variant selection
+        selectedSides: it.raw?.selectedSides || [], // Preserve sides selection
       }));
 
       // Save to localStorage so the Checkout page can read it client-side
@@ -218,7 +228,15 @@ export default function CartOverlay({ products = [], onCartUpdated } = {}) {
                       />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-sm mb-1">{it.name}</h4>
-                        <div className="flex items-center justify-between">
+                        {it.variant && (
+                          <p className="text-xs text-neutral-600 mb-1">Variant: {it.variant}</p>
+                        )}
+                        {it.selectedSides && it.selectedSides.length > 0 && (
+                          <p className="text-xs text-neutral-600 mb-1">
+                            Sides: {it.selectedSides.map(s => s.sideName || s.name || s).join(', ')}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => updateQuantity(it.cartItemId ?? it.id, it.menuItemId, it.quantity, -1)}

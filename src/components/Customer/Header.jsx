@@ -1,12 +1,15 @@
 "use client";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Flame, Menu, X, UtensilsCrossed } from 'lucide-react';
 import { colors, iconBackgrounds } from '@/constants/colors';
+import { useRestaurant } from '@/hooks/useRestaurant';
 
 export default function Header({ handleSmoothScroll }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { restaurant, loading } = useRestaurant();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,19 +56,35 @@ export default function Header({ handleSmoothScroll }) {
             href="/" 
             className="group inline-flex items-center gap-2.5"
           >
-            <span className="relative inline-flex items-center">
-              <span 
-                className="absolute -left-2 -top-2 h-7 w-7 rounded-full" 
-                style={{ background: iconBackgrounds.red }}
-              />
-              <Flame className="relative h-5 w-5" style={{ color: colors.primary }} />
-            </span>
-            <span 
-              className="text-xl sm:text-2xl tracking-tight" 
-              style={{ fontFamily: "'Pacifico', cursive", color: colors.textDark }}
-            >
-              Baltit Wok
-            </span>
+            {restaurant?.logo ? (
+              <div className="relative w-20 sm:h-12 sm:w-12 rounded-lg overflow-hidden flex-shrink-0">
+                <Image
+                  src={restaurant.logo}
+                  alt={restaurant.name || 'Restaurant Logo'}
+                  fill
+                  className="object-contain"
+                  onError={(e) => {
+                    const img = e.target
+                    img.style.display = 'none'
+                    const fallback = img.parentElement.querySelector('.logo-fallback')
+                    if (fallback) fallback.style.display = 'flex'
+                  }}
+                />
+                <span className="logo-fallback hidden absolute inset-0 relative inline-flex items-center">
+                  <span 
+                    className="absolute -left-2 -top-2 h-7 w-7 rounded-full" 
+                    style={{ background: iconBackgrounds.red }}
+                  />
+                </span>
+              </div>
+            ) : (
+              <span className="relative inline-flex items-center">
+                <span 
+                  className="absolute -left-2 -top-2 h-7 w-7 rounded-full" 
+                  style={{ background: iconBackgrounds.red }}
+                />
+              </span>
+            )}
           </Link>
 
           <div className="hidden items-center gap-6 md:flex">
@@ -87,7 +106,7 @@ export default function Header({ handleSmoothScroll }) {
               Menu
             </Link>
             <Link 
-              href="#deals" 
+              href="/#deals" 
               className="text-sm font-medium transition-colors hover:underline" 
               style={{ color: colors.textDark }} 
               onMouseEnter={(e) => handleLinkHover(e, true)} 
@@ -97,7 +116,7 @@ export default function Header({ handleSmoothScroll }) {
               Deals
             </Link>
             <Link 
-              href="#location" 
+              href="/#location" 
               className="text-sm font-medium transition-colors hover:underline" 
               style={{ color: colors.textDark }} 
               onMouseEnter={(e) => handleLinkHover(e, true)} 
@@ -107,7 +126,7 @@ export default function Header({ handleSmoothScroll }) {
               Location
             </Link>
             <Link 
-              href="#contact" 
+              href="/#contact" 
               className="text-sm font-medium transition-colors hover:underline" 
               style={{ color: colors.textDark }} 
               onMouseEnter={(e) => handleLinkHover(e, true)} 

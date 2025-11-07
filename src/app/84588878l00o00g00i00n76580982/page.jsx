@@ -35,8 +35,8 @@ export default function LoginPage() {
       localStorage.setItem('userRole', data.role)
       localStorage.setItem('userName', `${data.firstName} ${data.lastName}`)
 
-  // Force a hard navigation to the admin Orders page
-  window.location.href = '/admin/Orders'
+  // Force a hard navigation to the admin page
+  window.location.href = '/admin'
     } catch (err) {
       console.error('Login error:', err)
       setError(err.message || 'Login failed. Please try again.')

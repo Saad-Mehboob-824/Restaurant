@@ -1,20 +1,30 @@
 import { sign } from 'jsonwebtoken'
-import { connectToDB } from '@/services/db'
+import { connectToDB, findUserByEmail } from '@/services/db'
 import bcrypt from 'bcryptjs'
-import { cookies } from 'next/headers'
-import { User } from '@/models/User' // Updated import path
+import { getOrCreateDefaultRestaurant } from '@/utils/getRestaurantId'
 
 export async function POST(request) {
   try {
     const { email, password } = await request.json()
     console.log('Login attempt for email:', email)
+    
+    const restaurantId = await getOrCreateDefaultRestaurant()
+    if (!restaurantId) {
+      return new Response(
+        JSON.stringify({ error: 'No restaurant found. Please create a restaurant first.' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+    
     await connectToDB()
 
-    // Find user
-    const user = await User.findOne({ email })
+    // Find user in User collection (supports both branch-specific and Global users)
+    const user = await findUserByEmail(restaurantId, email)
     console.log('Found user:', user ? { 
+      _id: user._id,
       email: user.email, 
-      role: user.role, 
+      role: user.role,
+      restaurantId: user.restaurantId,
       passwordHashLength: user.passwordHash?.length 
     } : 'No user found')
     
@@ -37,9 +47,11 @@ export async function POST(request) {
     }
 
     // Create token
+    // Users now have _id in separate collection
     const token = sign(
       { 
-        userId: user._id,
+        userId: user._id.toString(), // Use _id as identifier
+        restaurantId: user.restaurantId ? user.restaurantId.toString() : restaurantId, // Use user's restaurantId or fallback
         email: user.email,
         role: user.role,
         firstName: user.firstName,

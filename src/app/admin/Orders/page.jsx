@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { Search, RefreshCcw, Plus, LayoutGrid, Clock, Menu } from 'lucide-react'
+import Image from 'next/image'
+import { Search, RefreshCcw, Plus, LayoutGrid, Clock, Menu, ArrowLeft } from 'lucide-react'
 import OrderCard from '@/components/Orders/OrderCard'
 import { STATUS_STYLES } from '@/constants/orderStyles'
 import { useWebSocket } from '@/hooks/useWebSocket'
+import { useRestaurant } from '@/hooks/useRestaurant'
 
 const STATUS_PILLS = [
   { label: 'All', value: 'all' },
@@ -21,7 +23,24 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [activeStatus, setActiveStatus] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [menuItems, setMenuItems] = useState([])
+  const { restaurant, loading: restaurantLoading } = useRestaurant()
   
+
+  const loadMenuItems = async () => {
+    try {
+      const response = await fetch('/api/menu-items?admin=true')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success && result.data) {
+          setMenuItems(result.data)
+          console.log('Loaded menu items:', result.data.length)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load menu items:', error)
+    }
+  }
 
   const loadOrders = async () => {
     try {
@@ -203,6 +222,7 @@ export default function OrdersPage() {
   // Load initial data
   useEffect(() => {
     loadOrders()
+    loadMenuItems()
   }, [])
 
   const handleStatusChange = async (orderId, action) => {
@@ -371,9 +391,30 @@ export default function OrdersPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-neutral-900 text-white flex items-center justify-center tracking-tight text-sm font-medium select-none">
-                OD
-              </div>
+              <button
+                onClick={() => window.location.href = '/admin'}
+                className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors"
+                aria-label="Back to admin"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              {restaurant?.logo ? (
+                <div className="relative h-8 w-8 rounded-lg overflow-hidden flex-shrink-0">
+                  <Image
+                    src={restaurant.logo}
+                    alt={restaurant.name || 'Restaurant Logo'}
+                    fill
+                    className="object-contain"
+                    onError={(e) => {
+                      e.target.style.display = 'none'
+                      e.target.nextSibling.style.display = 'flex'
+                    }}
+                  />
+                  <div className="hidden h-8 w-8 rounded-lg bg-neutral-900 text-white items-center justify-center tracking-tight text-sm font-medium select-none">OD</div>
+                </div>
+              ) : (
+                <div className="h-8 w-8 rounded-lg bg-neutral-900 text-white flex items-center justify-center tracking-tight text-sm font-medium select-none">OD</div>
+              )}
               <div className="flex flex-col">
                 <h1 className="text-[22px] leading-6 tracking-tight font-semibold">Order Dashboard</h1>
                 <p className="text-xs text-neutral-500">Monitor, filter, and manage live orders</p>
@@ -503,6 +544,7 @@ export default function OrdersPage() {
                 key={order._id}
                 order={order}
                 onAction={handleStatusChange}
+                menuItems={menuItems}
               />
             ))
           )}

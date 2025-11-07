@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import Image from 'next/image'
 import OrderCard from '@/components/Orders/OrderCard'
 import { LayoutGrid, List as ListIcon, ChevronLeft, ChevronRight, Search, RefreshCw, Clock, LogOut } from 'lucide-react'
+import { useRestaurant } from '@/hooks/useRestaurant'
 
 function formatDateLabel(start, end) {
   const s = new Date(start)
@@ -16,6 +18,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const { restaurant, loading: restaurantLoading } = useRestaurant()
   // Filter UI state
   const [searchQ, setSearchQ] = useState('')
   const [selectedStatuses, setSelectedStatuses] = useState(new Set())
@@ -174,7 +177,23 @@ export default function OrdersPage() {
           <div className="mx-auto max-w-7xl px-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-neutral-900 text-white flex items-center justify-center tracking-tight text-sm font-medium select-none">OD</div>
+                {restaurant?.logo ? (
+                  <div className="relative h-8 w-8 rounded-lg overflow-hidden flex-shrink-0">
+                    <Image
+                      src={restaurant.logo}
+                      alt={restaurant.name || 'Restaurant Logo'}
+                      fill
+                      className="object-contain"
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                        e.target.nextSibling.style.display = 'flex'
+                      }}
+                    />
+                    <div className="hidden h-8 w-8 rounded-lg bg-neutral-900 text-white items-center justify-center tracking-tight text-sm font-medium select-none">OD</div>
+                  </div>
+                ) : (
+                  <div className="h-8 w-8 rounded-lg bg-neutral-900 text-white flex items-center justify-center tracking-tight text-sm font-medium select-none">OD</div>
+                )}
                 <div className="flex flex-col">
                   <h1 className="text-[22px] leading-6 tracking-tight font-semibold">Order Dashboard</h1>
                   <p className="text-xs text-neutral-500">Monitor, filter, and manage live orders</p>
@@ -305,7 +324,7 @@ export default function OrdersPage() {
                   <div className="mt-2 text-sm text-neutral-700">
                     <ul className="list-disc pl-5">
                       {(o.items || []).map((it, i) => (
-                        <li key={i} className="truncate">{it.menuItem} × {it.quantity} — Rs {Number(it.price || 0).toFixed(0)}</li>
+                        <li key={i} className="truncate">{it.name || it.menuItem || 'Unknown Item'} × {it.quantity} — Rs {Number(it.price || 0).toFixed(0)}</li>
                       ))}
                     </ul>
                   </div>

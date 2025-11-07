@@ -35,19 +35,9 @@ export default function ProductGrid({ categories, items, setItems, sectionRefs }
             <h2 className="text-xl font-semibold mb-4">{cat.name}</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filtered.map((item) => (
+                console.log(item),
                 <ProductCard key={item._id} product={item} />
               ))}
-
-              {/* Add Item */}
-              {/* <div
-                onClick={() => {
-                  setSelectedCategory(cat._id);
-                  setIsModalOpen(true);
-                }}
-                className="flex items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50"
-              >
-                + Add Item
-              </div> */}
             </div>
             <hr className="mt-6 border-gray-200" />
           </div>

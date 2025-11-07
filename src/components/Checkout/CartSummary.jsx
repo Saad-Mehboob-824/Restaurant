@@ -23,7 +23,19 @@ export default function CartSummary({ cart, onUpdateQuantity }) {
           </div>
           <div className="flex-1">
             <h3 className="font-semibold mb-1">{item.name}</h3>
-            <p className="text-sm text-neutral-500 mb-2">{item.description}</p>
+            <p className="text-sm text-neutral-500 mb-1">{item.description}</p>
+            {/* Show variant if present */}
+            {item.variant && (
+              <p className="text-xs text-neutral-600 mb-1">
+                Variant: <span className="font-medium">{item.variant}</span>
+              </p>
+            )}
+            {/* Show sides if present */}
+            {item.selectedSides && item.selectedSides.length > 0 && (
+              <p className="text-xs text-neutral-600 mb-2">
+                Sides: <span className="font-medium">{item.selectedSides.map(s => s.sideName || s.name || s).join(', ')}</span>
+              </p>
+            )}
             <div className="flex items-center gap-3">
               <button
                 onClick={() => onUpdateQuantity(index, -1)}
@@ -41,7 +53,7 @@ export default function CartSummary({ cart, onUpdateQuantity }) {
             </div>
           </div>
           <div className="text-right">
-            <p className="font-semibold text-lg">${(item.price * item.quantity).toFixed(2)}</p>
+            <p className="font-semibold text-lg">Rs {(item.price * item.quantity).toFixed(0)}</p>
           </div>
         </div>
       ))}

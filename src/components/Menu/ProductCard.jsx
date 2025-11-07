@@ -1,18 +1,33 @@
 "use client";
 
+import { useState } from 'react'
 import { colors, buttons } from "@/constants/colors";
+import ProductModal from './ProductModal'
 
 export default function ProductCard({ product }) {
-  const handleAddToCart = () => {
+  const [showModal, setShowModal] = useState(false)
+
+  const hasVariants = product.variants && product.variants.length > 0
+  const hasSides = product.sides && product.sides.length > 0
+  const needsModal = hasVariants || hasSides
+
+  const handleAddToCart = (cartItem) => {
     try {
       const raw = localStorage.getItem("localCart");
       const cart = raw ? JSON.parse(raw) : [];
-      const idx = cart.findIndex((c) => c.menuItemId === product._id);
+      
+      // Check if item with same menuItemId, variant, and sides already exists
+      const idx = cart.findIndex((c) => {
+        const sameMenuItem = c.menuItemId === cartItem.menuItemId
+        const sameVariant = c.variant === cartItem.variant
+        const sameSides = JSON.stringify(c.selectedSides || []) === JSON.stringify(cartItem.selectedSides || [])
+        return sameMenuItem && sameVariant && sameSides
+      });
 
       if (idx >= 0) {
-        cart[idx].quantity = Number(cart[idx].quantity || 0) + 1;
+        cart[idx].quantity = Number(cart[idx].quantity || 0) + cartItem.quantity;
       } else {
-        cart.push({ menuItemId: product._id, quantity: 1, product });
+        cart.push(cartItem);
       }
 
       localStorage.setItem("localCart", JSON.stringify(cart));
@@ -23,35 +38,61 @@ export default function ProductCard({ product }) {
     }
   };
 
+  const handleAddClick = (e) => {
+    e.stopPropagation();
+    if (needsModal) {
+      setShowModal(true);
+    } else {
+      // Direct add to cart for items without variants/sides
+      handleAddToCart({
+        menuItemId: product._id,
+        name: product.name,
+        description: product.description,
+        image: product.image,
+        price: product.price || 0,
+        quantity: 1,
+        variant: '',
+        selectedSides: [],
+        product: product
+      });
+    }
+  };
+
   return (
-    <div
-      className=" rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5"
-      onClick={() => {}}
-    >
-      <img
-        src={product.image || "https://placehold.co/600x300"}
-        alt={product.name}
-        className="w-full h-48 object-cover"
-      />
+    <>
+      <div
+        className="rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5"
+        onClick={() => setShowModal(true)}
+      >
+        <img
+          src={product.image}
+          alt={product.name}
+          className="w-full h-48 object-cover"
+        />
 
-      <div className="p-4" style={{ backgroundColor: colors.bgSec, color: colors.textDark}}>
-        <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
-        <p className="text-sm text-neutral-600 mb-3">{product.description}</p>
+        <div className="p-4" style={{ backgroundColor: colors.bgSec, color: colors.textDark}}>
+          <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
+          <p className="text-sm text-neutral-600 mb-3">{product.description}</p>
 
-        <div className="flex items-center justify-between">
-          <span className="text-xl font-semibold">Rs {product.price}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAddToCart();
-            }}
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-            style={{ backgroundColor: buttons.primary.background, color: buttons.primary.text }}
-          >
-            Add
-          </button>
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-semibold">Rs {product.price}</span>
+            <button
+              onClick={handleAddClick}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{ backgroundColor: buttons.primary.background, color: buttons.primary.text }}
+            >
+              Add
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      <ProductModal
+        product={product}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onAddToCart={handleAddToCart}
+      />
+    </>
   );
 }

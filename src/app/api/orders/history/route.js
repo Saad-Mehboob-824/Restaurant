@@ -5,6 +5,13 @@ export async function GET(request) {
     const endDate = url.searchParams.get('endDate');
     const status = url.searchParams.get('status');
 
+    // Get restaurant ID
+    const { getOrCreateDefaultRestaurant } = await import('../../../../utils/getRestaurantId');
+    const restaurantId = await getOrCreateDefaultRestaurant();
+    if (!restaurantId) {
+      return Response.json({ error: 'No restaurant found' }, { status: 404 });
+    }
+
     // Dynamically import DB helpers to avoid bundling server-only modules
     const { getAllOrders, connectToDB } = await import('../../../../services/db');
     await connectToDB();
@@ -14,7 +21,7 @@ export async function GET(request) {
     if (endDate) filters.endDate = endDate;
     if (status) filters.status = status;
 
-    const orders = await getAllOrders(filters);
+    const orders = await getAllOrders(restaurantId, filters);
     return Response.json(orders);
   } catch (error) {
     console.error('Failed to fetch order history:', error);

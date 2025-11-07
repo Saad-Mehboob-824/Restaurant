@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import Image from 'next/image'
 import { Search, RefreshCcw, Plus, LayoutGrid, Clock, Menu } from 'lucide-react'
 import OrderCard from '@/components/Orders/OrderCard'
 import { STATUS_STYLES } from '@/constants/orderStyles'
 import { useWebSocket } from '@/hooks/useWebSocket'
+import { useRestaurant } from '@/hooks/useRestaurant'
 
 const STATUS_PILLS = [
   { label: 'All', value: 'all' },
@@ -19,6 +21,7 @@ const STATUS_PILLS = [
 export default function OrdersPage() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
+  const { restaurant, loading: restaurantLoading } = useRestaurant()
   const [activeStatus, setActiveStatus] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   
@@ -371,9 +374,23 @@ export default function OrdersPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-neutral-900 text-white flex items-center justify-center tracking-tight text-sm font-medium select-none">
-                OD
-              </div>
+              {restaurant?.logo ? (
+                <div className="relative h-8 w-8 rounded-lg overflow-hidden flex-shrink-0">
+                  <Image
+                    src={restaurant.logo}
+                    alt={restaurant.name || 'Restaurant Logo'}
+                    fill
+                    className="object-contain"
+                    onError={(e) => {
+                      e.target.style.display = 'none'
+                      e.target.nextSibling.style.display = 'flex'
+                    }}
+                  />
+                  <div className="hidden h-8 w-8 rounded-lg bg-neutral-900 text-white items-center justify-center tracking-tight text-sm font-medium select-none">OD</div>
+                </div>
+              ) : (
+                <div className="h-8 w-8 rounded-lg bg-neutral-900 text-white flex items-center justify-center tracking-tight text-sm font-medium select-none">OD</div>
+              )}
               <div className="flex flex-col">
                 <h1 className="text-[22px] leading-6 tracking-tight font-semibold">Order Dashboard</h1>
                 <p className="text-xs text-neutral-500">Monitor, filter, and manage live orders</p>

@@ -5,7 +5,18 @@ export async function PATCH(request, { params }) {
     const { orderId } = params
     const { status } = await request.json()
     
-    await updateOrderStatus(orderId, status)
+    // Get restaurantId for the update
+    const { getOrCreateDefaultRestaurant } = await import('../../../../utils/getRestaurantId')
+    const restaurantId = await getOrCreateDefaultRestaurant()
+    
+    if (!restaurantId) {
+      return new Response(JSON.stringify({ error: 'No restaurant found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+    
+    await updateOrderStatus(restaurantId, orderId, status)
     
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

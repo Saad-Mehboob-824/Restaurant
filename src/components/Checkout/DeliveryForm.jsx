@@ -1,22 +1,73 @@
 // components/DeliveryForm.jsx
 'use client'
 
-import { useState } from 'react'
-import { Bike, ShoppingBag, Phone, MapPin, Crosshair, Banknote, Mail } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Bike, ShoppingBag, Phone, MapPin, Crosshair, Banknote, Mail, Loader2 } from 'lucide-react'
 import Map from './Map'
 
 export default function DeliveryForm({ formData, onChange }) {
   const [selectedPickupDetails, setSelectedPickupDetails] = useState({ name: '', address: '' })
-  // Pickup locations map (use this to render the select and details)
-  const locations = {
-    islamabad: { name: 'Islamabad', address: 'G-13/1, near PGC' },
-    rawalpindi: { name: 'Rawalpindi', address: 'Saddar, Rawalpindi' },
-    f6: { name: 'F-6', address: 'F-6 sector, Islamabad' },
-  };
+  const [branches, setBranches] = useState([])
+  const [loadingLocations, setLoadingLocations] = useState(true)
+  const [locationsError, setLocationsError] = useState(null)
+
+  // Fetch restaurant branches dynamically
+  useEffect(() => {
+    async function fetchBranches() {
+      try {
+        setLoadingLocations(true)
+        setLocationsError(null)
+        
+        const response = await fetch('/api/restaurants')
+        if (!response.ok) {
+          throw new Error('Failed to fetch restaurant data')
+        }
+        
+        const result = await response.json()
+        if (result.success && result.data) {
+          // Get branches array from restaurant data
+          const restaurantBranches = Array.isArray(result.data.branches) ? result.data.branches : []
+          
+          // Filter to only show open branches
+          const openBranches = restaurantBranches.filter(branch => branch.status === 'Open')
+          
+          setBranches(openBranches)
+          
+          // If pickup location is already selected, update details
+          if (formData.pickupLocation) {
+            const branch = openBranches.find(b => b.name === formData.pickupLocation || b._id === formData.pickupLocation)
+            if (branch) {
+              setSelectedPickupDetails({
+                name: branch.name || '',
+                address: branch.address || ''
+              })
+            }
+          }
+        } else {
+          throw new Error('Invalid restaurant data')
+        }
+      } catch (error) {
+        console.error('Error fetching branches:', error)
+        setLocationsError(error.message)
+      } finally {
+        setLoadingLocations(false)
+      }
+    }
+
+    fetchBranches()
+  }, [formData.pickupLocation])
 
   const handlePickupChange = (value) => {
     onChange('pickupLocation', value)
-    setSelectedPickupDetails(locations[value] || { name: '', address: '' })
+    const branch = branches.find(b => b.name === value || b._id === value)
+    if (branch) {
+      setSelectedPickupDetails({
+        name: branch.name || '',
+        address: branch.address || ''
+      })
+    } else {
+      setSelectedPickupDetails({ name: '', address: '' })
+    }
   }
 
   const useCurrentLocation = () => {
@@ -139,26 +190,49 @@ export default function DeliveryForm({ formData, onChange }) {
         {formData.orderType === 'pickup' && (
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-2">Select Pickup Location</label>
-            <select
-              value={formData.pickupLocation}
-              onChange={(e) => handlePickupChange(e.target.value)}
-              className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
-            >
-              <option value="">Choose a location...</option>
-              {Object.entries(locations).map(([key, loc]) => (
-                <option key={key} value={key}>{`${loc.name} - ${loc.address}`}</option>
-              ))}
-            </select>
-            {formData.pickupLocation && (
-              <div className="mt-4 p-4 bg-neutral-50 border border-neutral-200 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-neutral-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-neutral-900 mb-1">{selectedPickupDetails.name}</p>
-                    <p className="text-sm text-neutral-600">{selectedPickupDetails.address}</p>
-                  </div>
-                </div>
+            {loadingLocations ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-5 h-5 text-neutral-400 animate-spin mr-2" />
+                <span className="text-sm text-neutral-500">Loading locations...</span>
               </div>
+            ) : locationsError ? (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">
+                  Failed to load branches: {locationsError}
+                </p>
+              </div>
+            ) : branches.length === 0 ? (
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-600">
+                  No pickup branches available. Please contact support.
+                </p>
+              </div>
+            ) : (
+              <>
+                <select
+                  value={formData.pickupLocation}
+                  onChange={(e) => handlePickupChange(e.target.value)}
+                  className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+                >
+                  <option value="">Choose a branch...</option>
+                  {branches.map((branch) => (
+                    <option key={branch._id || branch.name} value={branch.name}>
+                      {`${branch.name} - ${branch.address || ''}`}
+                    </option>
+                  ))}
+                </select>
+                {formData.pickupLocation && selectedPickupDetails.name && (
+                  <div className="mt-4 p-4 bg-neutral-50 border border-neutral-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-5 h-5 text-neutral-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium text-neutral-900 mb-1">{selectedPickupDetails.name}</p>
+                        <p className="text-sm text-neutral-600">{selectedPickupDetails.address}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

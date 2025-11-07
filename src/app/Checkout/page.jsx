@@ -15,12 +15,14 @@ export default function CheckoutPage() {
         const parsed = JSON.parse(stored)
         const normalized = parsed.map((item) => ({
           id: item.id || item.menuItemId || item._id,
+          menuItemId: item.menuItemId || item.id || item._id, // Preserve menuItemId for order creation
           name: item.name || item.product?.name || '',
           description: item.description || item.product?.description || '',
           imageUrl: item.imageUrl || item.image || item.product?.image || '',
           price: Number(item.price ?? item.product?.price ?? 0),
           quantity: Number(item.quantity ?? 1),
-          selectedSides: item.selectedSides || item.selectedOptions || [],
+          variant: item.variant || '', // Preserve variant selection
+          selectedSides: item.selectedSides || item.selectedOptions || [], // Preserve sides selection
         }))
         setCart(normalized)
         return

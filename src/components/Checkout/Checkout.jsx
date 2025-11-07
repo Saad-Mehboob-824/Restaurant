@@ -24,6 +24,7 @@ export default function Checkout({ cart: initialCart, user = {}, onOrderPlaced }
     instructions: '',
     orderType: 'delivery',
     pickupLocation: '',
+    branch: '',
   })
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [generatedOtp, setGeneratedOtp] = useState('')
@@ -39,6 +40,7 @@ export default function Checkout({ cart: initialCart, user = {}, onOrderPlaced }
     instructions: '',
     orderType: 'delivery',
     pickupLocation: '',
+    branch: '',
   }
 
   const clearCart = () => {
@@ -140,7 +142,7 @@ export default function Checkout({ cart: initialCart, user = {}, onOrderPlaced }
       : formData.pickupLocation
       
     try {
-      // Create the order object
+      // Create the order object with menuItemId references
       const payload = {
         customerName: formData.name,
         email: formData.email,
@@ -148,10 +150,13 @@ export default function Checkout({ cart: initialCart, user = {}, onOrderPlaced }
         orderType: formData.orderType,
         address: address,
         instructions: formData.instructions,
+        branch: formData.orderType === 'pickup' ? formData.pickupLocation : '', // Include branch for pickup orders
         items: localCart.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price
+          menuItemId: item.menuItemId || item.id || item._id, // Extract menuItemId (required)
+          quantity: item.quantity || 1,
+          variant: item.variant || '', // Selected variant name
+          price: item.price || 0, // Price per item including variant/sides
+          selectedSides: item.selectedSides || [] // Selected sides array
         })),
         totalAmount: total,
         paymentMethod: selectedPaymentMethod,
