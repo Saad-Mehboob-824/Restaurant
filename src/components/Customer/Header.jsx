@@ -1,17 +1,20 @@
 "use client";
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Flame, Menu, X, UtensilsCrossed } from 'lucide-react';
-import { colors, iconBackgrounds } from '@/constants/colors';
+import { Menu, X, UtensilsCrossed, Home, MapPin, Phone, Gift, MessageCircle } from 'lucide-react';
+import { colors } from '@/constants/colors';
 import { useRestaurant } from '@/hooks/useRestaurant';
 
 export default function Header({ handleSmoothScroll }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { restaurant, loading } = useRestaurant();
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 8);
     };
@@ -24,45 +27,35 @@ export default function Header({ handleSmoothScroll }) {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const handleLinkHover = (e, isHover) => {
-    e.target.style.color = isHover ? colors.primary : colors.textDark;
-  };
-
-  const handleBorderHover = (e, isHover) => {
-    e.target.style.borderColor = isHover ? colors.primary : colors.border;
-  };
-
-  const handleAccentBorderHover = (e, isHover) => {
-    e.target.style.borderColor = isHover ? colors.accent : colors.border;
-    e.target.style.color = isHover ? colors.accent : colors.textDark;
-  };
-
   return (
     <header 
       id="siteHeader" 
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${isScrolled ? 'drop-shadow-sm' : ''}`}
-      style={{ backgroundColor: colors.bgPrimary, color: colors.textDark }}
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${isScrolled ? 'drop-shadow-lg backdrop-blur-xl' : 'backdrop-blur-sm'}`}
+      style={{ 
+        backgroundColor: isScrolled ? `${colors.bgSec}ee` : `${colors.bgPrimary}dd`, 
+        color: colors.textDark,
+        borderBottom: `1px solid ${isScrolled ? colors.border : colors.borderLight}`
+      }}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav 
           id="navBar" 
-          className="flex items-center justify-between rounded-b-xl px-3 py-3 backdrop-blur-md transition-all duration-300" 
+          className="flex items-center justify-between rounded-b-2xl px-4 sm:px-6 py-2.5 transition-all duration-300" 
           style={{ 
-            background: isScrolled ? colors.bgSec : colors.bgPrimary, 
-            border: `1px solid ${isScrolled ? colors.border : colors.borderLight}` 
+            background: 'transparent'
           }}
         >
           <Link 
             href="/" 
-            className="group inline-flex items-center gap-2.5"
+            className="group inline-flex items-center gap-2.5 transition-transform hover:scale-105"
           >
             {restaurant?.logo ? (
-              <div className="relative w-20 sm:h-12 sm:w-12 rounded-lg overflow-hidden flex-shrink-0">
+              <div className="relative h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 rounded-xl overflow-hidden flex-shrink-0 shadow-lg ring-2 ring-white/10 group-hover:ring-white/20 transition-all duration-300">
                 <Image
                   src={restaurant.logo}
                   alt={restaurant.name || 'Restaurant Logo'}
                   fill
-                  className="object-contain"
+                  className="object-contain p-1.5"
                   onError={(e) => {
                     const img = e.target
                     img.style.display = 'none'
@@ -70,75 +63,86 @@ export default function Header({ handleSmoothScroll }) {
                     if (fallback) fallback.style.display = 'flex'
                   }}
                 />
-                <span className="logo-fallback hidden absolute inset-0 relative inline-flex items-center">
-                  <span 
-                    className="absolute -left-2 -top-2 h-7 w-7 rounded-full" 
-                    style={{ background: iconBackgrounds.red }}
-                  />
+                <span className="logo-fallback hidden absolute inset-0 relative inline-flex items-center justify-center">
+                  <UtensilsCrossed className="h-6 w-6 sm:h-7 sm:w-7" style={{ color: colors.primary }} />
                 </span>
               </div>
             ) : (
-              <span className="relative inline-flex items-center">
-                <span 
-                  className="absolute -left-2 -top-2 h-7 w-7 rounded-full" 
-                  style={{ background: iconBackgrounds.red }}
-                />
+              <div className="relative h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg ring-2 ring-white/10 group-hover:ring-white/20 transition-all duration-300"
+                   style={{ background: `linear-gradient(135deg, ${colors.primary}22, ${colors.secondary}22)` }}>
+                <UtensilsCrossed className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" style={{ color: colors.primary }} />
+              </div>
+            )}
+            {restaurant?.name && (
+              <span className="hidden sm:block text-base sm:text-lg font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                {restaurant.name}
               </span>
             )}
           </Link>
 
-          <div className="hidden items-center gap-6 md:flex">
+          <div className="hidden items-center gap-1 md:flex">
             <Link 
               href="#home" 
-              className="text-sm font-medium transition-colors hover:underline" 
+              className="relative px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg hover:bg-white/5 group" 
               style={{ color: colors.textDark }} 
               onClick={(e) => handleSmoothScroll(e, '#home')}
+              onMouseEnter={(e) => { e.target.style.color = colors.primary; }}
+              onMouseLeave={(e) => { e.target.style.color = colors.textDark; }}
             >
-              Home
+              <span className="relative z-10">Home</span>
+              <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
             </Link>
             <Link 
               href="/menu" 
-              className="text-sm font-medium transition-colors hover:underline" 
+              className="relative px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg hover:bg-white/5 group" 
               style={{ color: colors.textDark }} 
-              onMouseEnter={(e) => handleLinkHover(e, true)} 
-              onMouseLeave={(e) => handleLinkHover(e, false)}
+              onMouseEnter={(e) => { e.target.style.color = colors.primary; }}
+              onMouseLeave={(e) => { e.target.style.color = colors.textDark; }}
             >
-              Menu
+              <span className="relative z-10">Menu</span>
+              <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
             </Link>
             <Link 
               href="/#deals" 
-              className="text-sm font-medium transition-colors hover:underline" 
+              className="relative px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg hover:bg-white/5 group" 
               style={{ color: colors.textDark }} 
-              onMouseEnter={(e) => handleLinkHover(e, true)} 
-              onMouseLeave={(e) => handleLinkHover(e, false)} 
+              onMouseEnter={(e) => { e.target.style.color = colors.primary; }}
+              onMouseLeave={(e) => { e.target.style.color = colors.textDark; }}
               onClick={(e) => handleSmoothScroll(e, '#deals')}
             >
-              Deals
+              <span className="relative z-10">Deals</span>
+              <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
             </Link>
             <Link 
               href="/#location" 
-              className="text-sm font-medium transition-colors hover:underline" 
+              className="relative px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg hover:bg-white/5 group" 
               style={{ color: colors.textDark }} 
-              onMouseEnter={(e) => handleLinkHover(e, true)} 
-              onMouseLeave={(e) => handleLinkHover(e, false)} 
+              onMouseEnter={(e) => { e.target.style.color = colors.primary; }}
+              onMouseLeave={(e) => { e.target.style.color = colors.textDark; }}
               onClick={(e) => handleSmoothScroll(e, '#location')}
             >
-              Location
+              <span className="relative z-10">Location</span>
+              <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
             </Link>
             <Link 
               href="/#contact" 
-              className="text-sm font-medium transition-colors hover:underline" 
+              className="relative px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg hover:bg-white/5 group" 
               style={{ color: colors.textDark }} 
-              onMouseEnter={(e) => handleLinkHover(e, true)} 
-              onMouseLeave={(e) => handleLinkHover(e, false)} 
+              onMouseEnter={(e) => { e.target.style.color = colors.primary; }}
+              onMouseLeave={(e) => { e.target.style.color = colors.textDark; }}
               onClick={(e) => handleSmoothScroll(e, '#contact')}
             >
-              Contact
+              <span className="relative z-10">Contact</span>
+              <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
             </Link>
             <Link 
               href="/menu" 
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" 
-              style={{ backgroundColor: colors.primary, letterSpacing: '-0.01em' }}
+              className="ml-2 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black" 
+              style={{ 
+                background: `linear-gradient(135deg, ${colors.primary}, ${colors.accent})`,
+                letterSpacing: '-0.01em',
+                boxShadow: `0 4px 14px 0 ${colors.primary}40`
+              }}
             >
               <UtensilsCrossed className="h-4 w-4" />
               <span>View Menu</span>
@@ -148,100 +152,235 @@ export default function Header({ handleSmoothScroll }) {
           <button 
             id="mobileMenuBtn" 
             aria-label="Open Menu" 
-            className="md:hidden inline-flex items-center justify-center rounded-lg border px-2.5 py-2 transition hover:bg-white/70 focus:outline-none focus-visible:ring-2" 
-            style={{ color: colors.textDark, borderColor: colors.border }} 
-            onMouseEnter={(e) => handleBorderHover(e, true)} 
-            onMouseLeave={(e) => handleBorderHover(e, false)} 
+            className="md:hidden inline-flex items-center justify-center rounded-xl border-2 px-3 py-2 transition-all duration-300 hover:scale-110 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" 
+            style={{ 
+              color: colors.textDark, 
+              borderColor: colors.border,
+              backgroundColor: isMobileMenuOpen ? `${colors.primary}20` : 'transparent'
+            }} 
             onClick={toggleMobileMenu}
           >
-            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isMobileMenuOpen ? (
+              <X className="h-5 w-5 transition-transform duration-300 rotate-90" style={{ color: colors.primary }} />
+            ) : (
+              <Menu className="h-5 w-5 transition-transform duration-300" />
+            )}
           </button>
         </nav>
+      </div>
 
-        <div 
-          id="mobileDrawer" 
-          className={`md:hidden pointer-events-none fixed inset-x-0 top-16 z-40 mx-4 origin-top scale-95 opacity-0 transition-all ${isMobileMenuOpen ? 'pointer-events-auto opacity-100 scale-100' : ''}`}
-        >
+      {/* Mobile Sidebar - Rendered via Portal outside header */}
+      {mounted && createPortal(
+        <>
+          {/* Mobile Sidebar Overlay */}
+          {isMobileMenuOpen && (
+            <div 
+              className="md:hidden fixed inset-0 z-[9998] bg-black/80 backdrop-blur-sm transition-opacity duration-300"
+              onClick={toggleMobileMenu}
+              style={{ top: '0' }}
+            />
+          )}
+
+          {/* Mobile Sidebar Drawer */}
           <div 
-            className="rounded-xl border bg-white/90 p-4 backdrop-blur-md shadow-lg" 
-            style={{ borderColor: colors.border }}
+            id="mobileDrawer" 
+            className={`md:hidden fixed inset-y-0 right-0 z-[9999] w-80 max-w-[85vw] transform transition-transform duration-300 ease-out ${
+              isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
+            style={{ top: '0', backgroundColor: colors.bgPrimary, pointerEvents: isMobileMenuOpen ? 'auto' : 'none' }}
           >
-            <div className="flex flex-col divide-y" style={{ borderColor: colors.borderLight }}>
-              <Link 
-                href="/" 
-                className="py-3 text-sm font-medium" 
-                style={{ color: colors.textDark }} 
-                onMouseEnter={(e) => handleLinkHover(e, true)} 
-                onMouseLeave={(e) => handleLinkHover(e, false)} 
-                onClick={(e) => { toggleMobileMenu(); handleSmoothScroll(e, '#home'); }}
-              >
-                Home
-              </Link>
-              <Link 
-                href="/menu" 
-                className="py-3 text-sm font-medium" 
-                style={{ color: colors.textDark }} 
-                onMouseEnter={(e) => handleLinkHover(e, true)} 
-                onMouseLeave={(e) => handleLinkHover(e, false)} 
-                onClick={toggleMobileMenu}
-              >
-                Menu
-              </Link>
-              <Link 
-                href="#deals" 
-                className="py-3 text-sm font-medium" 
-                style={{ color: colors.textDark }} 
-                onMouseEnter={(e) => handleLinkHover(e, true)} 
-                onMouseLeave={(e) => handleLinkHover(e, false)} 
-                onClick={(e) => { toggleMobileMenu(); handleSmoothScroll(e, '#deals'); }}
-              >
-                Deals
-              </Link>
-              <Link 
-                href="#location" 
-                className="py-3 text-sm font-medium" 
-                style={{ color: colors.textDark }} 
-                onMouseEnter={(e) => handleLinkHover(e, true)} 
-                onMouseLeave={(e) => handleLinkHover(e, false)} 
-                onClick={(e) => { toggleMobileMenu(); handleSmoothScroll(e, '#location'); }}
-              >
-                Location
-              </Link>
-              <Link 
-                href="#contact" 
-                className="py-3 text-sm font-medium" 
-                style={{ color: colors.textDark }} 
-                onMouseEnter={(e) => handleLinkHover(e, true)} 
-                onMouseLeave={(e) => handleLinkHover(e, false)} 
-                onClick={(e) => { toggleMobileMenu(); handleSmoothScroll(e, '#contact'); }}
-              >
-                Contact
-              </Link>
-            </div>
-            <div className="mt-4 flex gap-3">
-              <Link 
-                href="/menu" 
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90" 
-                style={{ backgroundColor: colors.primary }} 
-                onClick={toggleMobileMenu}
-              >
-                View Menu 🍽️
-              </Link>
-              <a 
-                href="https://wa.me/923236300813?text=Hi%20Baltit%20Wok%2C%20I%27d%20like%20to%20order." 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold" 
-                style={{ borderColor: colors.border, color: colors.textDark }} 
-                onMouseEnter={(e) => handleAccentBorderHover(e, true)} 
-                onMouseLeave={(e) => handleAccentBorderHover(e, false)}
-              >
-                Order Now
-              </a>
+            <div 
+              className="h-full flex flex-col rounded-tl-3xl border-l border-t shadow-2xl overflow-hidden" 
+              style={{ 
+                borderColor: colors.borderLight,
+                backgroundColor: colors.bgPrimary
+              }}
+            >
+              {/* Sidebar Header */}
+              <div className="px-6 py-5 border-b" style={{ borderColor: colors.borderLight, backgroundColor: colors.bgPrimary }}>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold" style={{ color: colors.textDark }}>
+                    Menu
+                  </h2>
+                  <button
+                    onClick={toggleMobileMenu}
+                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    aria-label="Close Menu"
+                    style={{ color: colors.textDark }}
+                  >
+                    <X className="h-5 w-5" style={{ color: colors.textDark }} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Navigation Links */}
+              <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2" style={{ backgroundColor: colors.bgPrimary }}>
+                <Link 
+                  href="/" 
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-[1.02] group border" 
+                  style={{ 
+                    color: colors.textDark,
+                    borderColor: colors.borderLight,
+                    backgroundColor: colors.bgPrimary
+                  }} 
+                  onClick={(e) => { toggleMobileMenu(); handleSmoothScroll(e, '#home'); }}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.backgroundColor = `${colors.primary}20`; 
+                    e.currentTarget.style.color = colors.primary;
+                    e.currentTarget.style.borderColor = colors.primary;
+                  }} 
+                  onMouseLeave={(e) => { 
+                    e.currentTarget.style.backgroundColor = colors.bgPrimary; 
+                    e.currentTarget.style.color = colors.textDark;
+                    e.currentTarget.style.borderColor = colors.borderLight;
+                  }}
+                >
+                  <Home className="h-5 w-5 transition-transform group-hover:scale-110" style={{ color: 'inherit' }} />
+                  <span>Home</span>
+                </Link>
+                
+                <Link 
+                  href="/menu" 
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-[1.02] group border" 
+                  style={{ 
+                    color: colors.textDark,
+                    borderColor: colors.borderLight,
+                    backgroundColor: colors.bgPrimary
+                  }} 
+                  onClick={toggleMobileMenu}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.backgroundColor = `${colors.primary}20`; 
+                    e.currentTarget.style.color = colors.primary;
+                    e.currentTarget.style.borderColor = colors.primary;
+                  }} 
+                  onMouseLeave={(e) => { 
+                    e.currentTarget.style.backgroundColor = colors.bgPrimary; 
+                    e.currentTarget.style.color = colors.textDark;
+                    e.currentTarget.style.borderColor = colors.borderLight;
+                  }}
+                >
+                  <UtensilsCrossed className="h-5 w-5 transition-transform group-hover:scale-110" style={{ color: 'inherit' }} />
+                  <span>Menu</span>
+                </Link>
+                
+                <Link 
+                  href="#deals" 
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-[1.02] group border" 
+                  style={{ 
+                    color: colors.textDark,
+                    borderColor: colors.borderLight,
+                    backgroundColor: colors.bgPrimary
+                  }} 
+                  onClick={(e) => { toggleMobileMenu(); handleSmoothScroll(e, '#deals'); }}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.backgroundColor = `${colors.primary}20`; 
+                    e.currentTarget.style.color = colors.primary;
+                    e.currentTarget.style.borderColor = colors.primary;
+                  }} 
+                  onMouseLeave={(e) => { 
+                    e.currentTarget.style.backgroundColor = colors.bgPrimary; 
+                    e.currentTarget.style.color = colors.textDark;
+                    e.currentTarget.style.borderColor = colors.borderLight;
+                  }}
+                >
+                  <Gift className="h-5 w-5 transition-transform group-hover:scale-110" style={{ color: 'inherit' }} />
+                  <span>Deals</span>
+                </Link>
+                
+                <Link 
+                  href="#location" 
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-[1.02] group border" 
+                  style={{ 
+                    color: colors.textDark,
+                    borderColor: colors.borderLight,
+                    backgroundColor: colors.bgPrimary
+                  }} 
+                  onClick={(e) => { toggleMobileMenu(); handleSmoothScroll(e, '#location'); }}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.backgroundColor = `${colors.primary}20`; 
+                    e.currentTarget.style.color = colors.primary;
+                    e.currentTarget.style.borderColor = colors.primary;
+                  }} 
+                  onMouseLeave={(e) => { 
+                    e.currentTarget.style.backgroundColor = colors.bgPrimary; 
+                    e.currentTarget.style.color = colors.textDark;
+                    e.currentTarget.style.borderColor = colors.borderLight;
+                  }}
+                >
+                  <MapPin className="h-5 w-5 transition-transform group-hover:scale-110" style={{ color: 'inherit' }} />
+                  <span>Location</span>
+                </Link>
+                
+                <Link 
+                  href="#contact" 
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-[1.02] group border" 
+                  style={{ 
+                    color: colors.textDark,
+                    borderColor: colors.borderLight,
+                    backgroundColor: colors.bgPrimary
+                  }} 
+                  onClick={(e) => { toggleMobileMenu(); handleSmoothScroll(e, '#contact'); }}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.backgroundColor = `${colors.primary}20`; 
+                    e.currentTarget.style.color = colors.primary;
+                    e.currentTarget.style.borderColor = colors.primary;
+                  }} 
+                  onMouseLeave={(e) => { 
+                    e.currentTarget.style.backgroundColor = colors.bgPrimary; 
+                    e.currentTarget.style.color = colors.textDark;
+                    e.currentTarget.style.borderColor = colors.borderLight;
+                  }}
+                >
+                  <Phone className="h-5 w-5 transition-transform group-hover:scale-110" style={{ color: 'inherit' }} />
+                  <span>Contact</span>
+                </Link>
+              </nav>
+
+              {/* Sidebar Footer Actions */}
+              <div className="px-4 pb-6 pt-4 space-y-3 border-t" style={{ borderColor: colors.borderLight, backgroundColor: colors.bgPrimary }}>
+                <Link 
+                  href="/menu" 
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 active:scale-95" 
+                  style={{ 
+                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.accent})`,
+                    boxShadow: `0 4px 14px 0 ${colors.primary}40`
+                  }}
+                  onClick={toggleMobileMenu}
+                >
+                  <UtensilsCrossed className="h-5 w-5" />
+                  <span>View Menu</span>
+                </Link>
+                
+                <a 
+                  href="https://wa.me/923236300813?text=Hi%20Baltit%20Wok%2C%20I%27d%20like%20to%20order." 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 px-5 py-3.5 text-sm font-semibold transition-all duration-300 hover:scale-105 active:scale-95" 
+                  style={{ 
+                    borderColor: colors.borderLight, 
+                    color: colors.textDark,
+                    backgroundColor: colors.bgPrimary
+                  }}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.borderColor = colors.primary; 
+                    e.currentTarget.style.color = colors.primary;
+                    e.currentTarget.style.backgroundColor = `${colors.primary}20`;
+                  }} 
+                  onMouseLeave={(e) => { 
+                    e.currentTarget.style.borderColor = colors.borderLight; 
+                    e.currentTarget.style.color = colors.textDark;
+                    e.currentTarget.style.backgroundColor = colors.bgPrimary;
+                  }}
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  <span>Order Now</span>
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </>,
+        document.body
+      )}
     </header>
   );
 }

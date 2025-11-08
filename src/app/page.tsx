@@ -79,7 +79,7 @@ export default function Home() {
       </Head>
       <div className="antialiased selection:bg-black" style={{ backgroundColor: colors.bgPrimary, color: colors.textDark, fontFamily: "'Lato', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'" }}>
         <Header handleSmoothScroll={handleSmoothScroll} />
-        <main id="home" className="pt-24 sm:pt-28">
+        <main id="home" className="pt-20 sm:pt-24">
           <Hero handleSmoothScroll={handleSmoothScroll} />
           <Menu />
           <About />
