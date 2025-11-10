@@ -70,15 +70,15 @@ export default function ProductCard({ product }) {
           className="w-full h-48 object-cover"
         />
 
-        <div className="p-4" style={{ backgroundColor: colors.bgSec, color: colors.textDark}}>
-          <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
-          <p className="text-sm text-neutral-600 mb-3">{product.description}</p>
+        <div className="p-4 border rounded-b-xl" style={{ backgroundColor: colors.bgSec, color: colors.textDark, borderColor: colors.borderLight }}>
+          <h3 className="font-semibold text-lg mb-1" style={{ color: colors.textDark }}>{product.name}</h3>
+          <p className="text-sm mb-3" style={{ color: colors.textMuted }}>{product.description}</p>
 
           <div className="flex items-center justify-between">
-            <span className="text-xl font-semibold">Rs {product.price}</span>
+            <span className="text-xl font-semibold" style={{ color: colors.textDark }}>Rs {product.price}</span>
             <button
               onClick={handleAddClick}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90"
               style={{ backgroundColor: buttons.primary.background, color: buttons.primary.text }}
             >
               Add

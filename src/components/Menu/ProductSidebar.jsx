@@ -48,41 +48,19 @@ export default function ProductSidebar({
           {categories.map((cat) => {
             const isActive = String(selectedCategory) === String(cat._id);
             
-            // Mobile (default) styles for the button
-            let mobileClasses = `flex-shrink-0 px-4 py-2 rounded-full text-sm ${
-                isActive 
-                  ? "" // Active mobile style will be set via 'style' prop
-                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-            }`;
-
-            // Desktop (md:) styles for the button
-            let desktopClasses = `md:w-full md:text-left md:px-4 md:py-3 md:rounded-lg ${
-                // Desktop active style (when active)
-                isActive 
-                  ? "" 
-                  // Desktop inactive style
-                  : "md:text-neutral-600 md:hover:bg-neutral-100"
-            }`;
-            
             // Determine styles to apply via the 'style' prop (for dynamic colors)
             const styleProps = isActive 
               ? { 
-                  // Active Mobile Style (from your original Mobile bar)
                   backgroundColor: buttons.primary.background, 
                   color: buttons.primary.text,
-                  // Active Desktop Overrides (from your original Desktop sidebar)
-                  // Note: Tailwind classes would be more performant than inline styles
-                  // but we keep this to respect your original color variables.
-                  // For a cleaner approach, you might need to adjust your 'buttons' constant.
-                  // Using inline styles for background/text color for the active state
-                  // to keep it close to your original logic.
-                  // For desktop, you were using buttons.secondary.text for color.
-                  // This applies to both, but you might need to refine the colors based on your design.
-                  ... (window.innerWidth >= 768 ? { color: buttons.secondary.text } : {})
+                  borderColor: buttons.primary.background
                 }
               : {
-                  // Inactive Desktop Background Color (from your original Desktop sidebar)
-                  ... (window.innerWidth >= 768 ? { backgroundColor: colors.bgSec, color: buttons.secondary.text } : {})
+                  backgroundColor: colors.bgPrimary,
+                  color: colors.textDark,
+                  borderColor: colors.borderLight,
+                  borderWidth: '1px',
+                  borderStyle: 'solid'
                 };
                 
             return (
@@ -90,7 +68,9 @@ export default function ProductSidebar({
                 key={cat._id}
                 onClick={() => onSelect(cat._id)}
                 style={styleProps}
-                className={`${categoryItemBaseClasses} ${mobileClasses} ${desktopClasses}`}
+                className={`${categoryItemBaseClasses} flex-shrink-0 px-4 py-2 rounded-full text-sm md:w-full md:text-left md:px-4 md:py-3 md:rounded-lg transition-all duration-200 hover:opacity-90 ${
+                  !isActive ? 'hover:bg-white/5' : ''
+                }`}
               >
                 {cat.name}
               </button>

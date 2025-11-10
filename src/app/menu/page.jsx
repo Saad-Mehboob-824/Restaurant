@@ -96,9 +96,9 @@ export default function MenuPage() {
   return (
     <div style={{ backgroundColor: colors.bgPrimary, color: colors.textDark}}>
     <Header/>
-    <div className="flex flex-col md:flex-row gap-5 p-5 h-[calc(100vh-2rem)] mt-14">
+    <div className="flex flex-col md:flex-row gap-5 p-5 pt-20 sm:pt-24 h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)]">
       {/* Sidebar */}
-      <div className="md:w-52 w-full md:h-auto md:max-h-[calc(100vh-4rem)] overflow-auto no-scrollbar">
+      <div className="md:w-52 w-full md:h-auto md:max-h-[calc(100vh-7rem)] overflow-auto no-scrollbar">
         <ProductSidebar
           categories={categories}
           selectedCategory={selectedCategory}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ProductCard from "./ProductCard";
+import { colors } from "@/constants/colors";
 // import AddItemModal from "./AddItemModal";
 
 export default function ProductGrid({ categories, items, setItems, sectionRefs }) {
@@ -32,14 +33,16 @@ export default function ProductGrid({ categories, items, setItems, sectionRefs }
             data-category={cat._id}
             className="mb-8"
           >
-            <h2 className="text-xl font-semibold mb-4">{cat.name}</h2>
+            <h2 className="text-xl font-semibold mb-4" style={{ color: colors.textDark }}>
+              {cat.name}
+            </h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filtered.map((item) => (
                 console.log(item),
                 <ProductCard key={item._id} product={item} />
               ))}
             </div>
-            <hr className="mt-6 border-gray-200" />
+            <hr className="mt-6" style={{ borderColor: colors.borderLight }} />
           </div>
         );
       })}
