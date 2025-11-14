@@ -109,9 +109,10 @@ function broadcastToAll(message, exclude = null) {
     }
   })
 
-  const port = parseInt(process.env.PORT, 10) || 3001
-  server.listen(port, (err) => {
+  const port = parseInt(process.env.PORT, 10) || 5000
+  const host = '0.0.0.0'
+  server.listen(port, host, (err) => {
     if (err) throw err
-    console.log(`> Ready on http://localhost:${port}`)
+    console.log(`> Ready on http://${host}:${port}`)
   })
 })

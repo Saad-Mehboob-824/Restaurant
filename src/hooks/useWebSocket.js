@@ -48,9 +48,8 @@ export function useWebSocket(onMessage, options = {}) {
     try {
       const isSecure = window.location.protocol === 'https:'
       const protocol = isSecure ? 'wss:' : 'ws:'
-      // Prefer explicit IPv4 loopback to avoid ::1 vs 127.0.0.1 mismatch during dev
-      const host = window.location.hostname === 'localhost' ? '127.0.0.1:3002' : `${window.location.hostname}:3002`
-      const wsUrl = `${protocol}//${host}`
+      // Use the same host and port as the main application
+      const wsUrl = `${protocol}//${window.location.host}/api/ws`
 
       console.debug('[useWebSocket] creating global socket ->', wsUrl)
       const ws = new WebSocket(wsUrl)
