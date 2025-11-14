@@ -45,13 +45,20 @@ export async function getRestaurantId(request = null) {
   return null
 }
 
+let cachedDefaultRestaurantId = null;
+
 /**
  * Get or create default restaurant (for initial setup)
  * Priority:
  * 1. Environment variable 'Restaurant' from .env.local
- * 2. Create new default restaurant if not found or invalid
+ * 2. First existing restaurant in database
+ * 3. Create new default restaurant if none found
  */
 export async function getOrCreateDefaultRestaurant() {
+  if (cachedDefaultRestaurantId) {
+    return cachedDefaultRestaurantId;
+  }
+
   await connectToDB()
   
   // First, try to get restaurant ID from .env.local
@@ -59,24 +66,32 @@ export async function getOrCreateDefaultRestaurant() {
     try {
       const restaurant = await Restaurant.findById(process.env.Restaurant).lean()
       if (restaurant) {
-        return restaurant._id.toString()
+        cachedDefaultRestaurantId = restaurant._id.toString();
+        return cachedDefaultRestaurantId;
       } else {
-        console.warn(`Restaurant ID from .env.local (${process.env.Restaurant}) not found in database. Creating new default restaurant.`)
+        console.warn(`Restaurant ID from .env.local (${process.env.Restaurant}) not found in database.`)
       }
     } catch (error) {
       console.error('Error finding restaurant by ID from .env.local:', error)
-      console.log('Creating new default restaurant.')
     }
   }
   
-  // Create default restaurant if .env.local Restaurant not set or invalid
-  // Note: Categories, MenuItems, Users, and Orders are now in separate collections
+  // Try to find any existing restaurant first
+  const existingRestaurant = await Restaurant.findOne().lean();
+  if (existingRestaurant) {
+    console.log(`Using existing restaurant with ID: ${existingRestaurant._id}`);
+    cachedDefaultRestaurantId = existingRestaurant._id.toString();
+    return cachedDefaultRestaurantId;
+  }
+  
+  // Create default restaurant only if none exists
   const restaurant = await Restaurant.create({
     name: process.env.DEFAULT_RESTAURANT_NAME || 'My Restaurant',
     branches: []
   })
   console.log(`Created default restaurant with ID: ${restaurant._id}`)
+  cachedDefaultRestaurantId = restaurant._id.toString();
   
-  return restaurant._id.toString()
+  return cachedDefaultRestaurantId;
 }
 
