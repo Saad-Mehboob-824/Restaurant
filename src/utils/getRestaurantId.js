@@ -46,6 +46,7 @@ export async function getRestaurantId(request = null) {
 }
 
 let cachedDefaultRestaurantId = null;
+let connectionPromise = null;
 
 /**
  * Get or create default restaurant (for initial setup)
@@ -59,7 +60,19 @@ export async function getOrCreateDefaultRestaurant() {
     return cachedDefaultRestaurantId;
   }
 
-  await connectToDB()
+  // Ensure database connection is fully established before proceeding
+  if (!connectionPromise) {
+    connectionPromise = connectToDB();
+  }
+  await connectionPromise;
+  
+  // Wait for connection to be ready
+  const mongoose = (await import('mongoose')).default;
+  if (mongoose.connection.readyState !== 1) {
+    await new Promise((resolve) => {
+      mongoose.connection.once('open', resolve);
+    });
+  }
   
   // First, try to get restaurant ID from .env.local
   if (process.env.Restaurant) {
