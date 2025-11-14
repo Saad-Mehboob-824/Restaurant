@@ -44,7 +44,8 @@ export async function PUT(request) {
     
     // Notify connected WebSocket clients via internal server endpoint
     try {
-      const broadcastUrl = process.env.WS_BROADCAST_URL || 'http://127.0.0.1:5000/internal/ws/broadcast'
+      const port = process.env.PORT || 5000;
+      const broadcastUrl = process.env.WS_BROADCAST_URL || `http://localhost:${port}/internal/ws/broadcast`;
       await fetch(broadcastUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -118,7 +119,8 @@ export async function POST(req) {
 
     // Notify all WebSocket clients about the new order via internal endpoint
     try {
-      const broadcastUrl = process.env.WS_BROADCAST_URL || 'http://127.0.0.1:5000/internal/ws/broadcast'
+      const port = process.env.PORT || 5000;
+      const broadcastUrl = process.env.WS_BROADCAST_URL || `http://localhost:${port}/internal/ws/broadcast`;
       await fetch(broadcastUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

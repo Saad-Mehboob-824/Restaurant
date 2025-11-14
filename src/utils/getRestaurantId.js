@@ -46,7 +46,7 @@ export async function getRestaurantId(request = null) {
 }
 
 let cachedDefaultRestaurantId = null;
-let connectionPromise = null;
+let restaurantPromise = null;
 
 /**
  * Get or create default restaurant (for initial setup)
@@ -56,55 +56,73 @@ let connectionPromise = null;
  * 3. Create new default restaurant if none found
  */
 export async function getOrCreateDefaultRestaurant() {
+  // Return cached ID if available
   if (cachedDefaultRestaurantId) {
     return cachedDefaultRestaurantId;
   }
 
-  // Ensure database connection is fully established before proceeding
-  if (!connectionPromise) {
-    connectionPromise = connectToDB();
+  // Ensure only one concurrent initialization
+  if (restaurantPromise) {
+    return restaurantPromise;
   }
-  await connectionPromise;
-  
-  // Wait for connection to be ready
-  const mongoose = (await import('mongoose')).default;
-  if (mongoose.connection.readyState !== 1) {
-    await new Promise((resolve) => {
-      mongoose.connection.once('open', resolve);
-    });
-  }
-  
-  // First, try to get restaurant ID from .env.local
-  if (process.env.Restaurant) {
+
+  // Create initialization promise
+  restaurantPromise = (async () => {
     try {
-      const restaurant = await Restaurant.findById(process.env.Restaurant).lean()
-      if (restaurant) {
-        cachedDefaultRestaurantId = restaurant._id.toString();
-        return cachedDefaultRestaurantId;
-      } else {
-        console.warn(`Restaurant ID from .env.local (${process.env.Restaurant}) not found in database.`)
+      // Ensure database connection is fully established
+      await connectToDB();
+      
+      // Wait for connection to be ready with timeout
+      const mongoose = (await import('mongoose')).default;
+      if (mongoose.connection.readyState !== 1) {
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('Connection timeout')), 10000);
+          mongoose.connection.once('open', () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+        });
       }
+      
+      // First, try to get restaurant ID from .env.local
+      if (process.env.Restaurant) {
+        try {
+          const restaurant = await Restaurant.findById(process.env.Restaurant).lean()
+          if (restaurant) {
+            cachedDefaultRestaurantId = restaurant._id.toString();
+            return cachedDefaultRestaurantId;
+          } else {
+            console.warn(`Restaurant ID from .env.local (${process.env.Restaurant}) not found in database.`)
+          }
+        } catch (error) {
+          console.error('Error finding restaurant by ID from .env.local:', error)
+        }
+      }
+      
+      // Try to find any existing restaurant first
+      const existingRestaurant = await Restaurant.findOne().lean();
+      if (existingRestaurant) {
+        console.log(`Using existing restaurant with ID: ${existingRestaurant._id}`);
+        cachedDefaultRestaurantId = existingRestaurant._id.toString();
+        return cachedDefaultRestaurantId;
+      }
+      
+      // Create default restaurant only if none exists
+      const restaurant = await Restaurant.create({
+        name: process.env.DEFAULT_RESTAURANT_NAME || 'My Restaurant',
+        branches: []
+      })
+      console.log(`Created default restaurant with ID: ${restaurant._id}`)
+      cachedDefaultRestaurantId = restaurant._id.toString();
+      
+      return cachedDefaultRestaurantId;
     } catch (error) {
-      console.error('Error finding restaurant by ID from .env.local:', error)
+      console.error('Failed to get or create default restaurant:', error);
+      restaurantPromise = null; // Reset promise to allow retry
+      throw error;
     }
-  }
-  
-  // Try to find any existing restaurant first
-  const existingRestaurant = await Restaurant.findOne().lean();
-  if (existingRestaurant) {
-    console.log(`Using existing restaurant with ID: ${existingRestaurant._id}`);
-    cachedDefaultRestaurantId = existingRestaurant._id.toString();
-    return cachedDefaultRestaurantId;
-  }
-  
-  // Create default restaurant only if none exists
-  const restaurant = await Restaurant.create({
-    name: process.env.DEFAULT_RESTAURANT_NAME || 'My Restaurant',
-    branches: []
-  })
-  console.log(`Created default restaurant with ID: ${restaurant._id}`)
-  cachedDefaultRestaurantId = restaurant._id.toString();
-  
-  return cachedDefaultRestaurantId;
+  })();
+
+  return restaurantPromise;
 }
 
