@@ -53,6 +53,17 @@ function broadcastToAll(message, exclude = null) {
   const wss = new WebSocket.Server({ noServer: true })
 
   wss.on('connection', (ws, request) => {
+    try {
+      const ip = request.socket && request.socket.remoteAddress
+      console.log('WebSocket connection established from', ip, 'url=', request.url)
+      console.log('WebSocket connection headers:', request.headers)
+    } catch (e) { /* ignore logging errors */ }
+
+    // mark alive for heartbeat
+    ws.isAlive = true
+    ws.on('pong', () => {
+      try { ws.isAlive = true } catch (e) { /* ignore */ }
+    })
     // Add new client to our set
     clients.add(ws)
 
@@ -92,12 +103,22 @@ function broadcastToAll(message, exclude = null) {
       }
     })
 
+    ws.on('error', (err) => {
+      console.error('WebSocket client error:', err)
+    })
+
     // Send initial connection success
-    ws.send(JSON.stringify({ type: 'connected' }))
+    try { ws.send(JSON.stringify({ type: 'connected' })) } catch (e) { /* ignore */ }
   })
 
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
+    try {
+      const ip = request.socket && request.socket.remoteAddress
+      console.log('Received upgrade request for', request.url, 'from', ip)
+      console.log('Upgrade headers:', request.headers)
+    } catch (e) { /* ignore */ }
+
     const { pathname } = parse(request.url)
 
     if (pathname === '/api/ws') {
@@ -109,10 +130,31 @@ function broadcastToAll(message, exclude = null) {
     }
   })
 
+  // Heartbeat: ping clients and terminate dead connections periodically
+  const heartbeatInterval = setInterval(() => {
+    clients.forEach((c) => {
+      try {
+        if (c.isAlive === false) {
+          c.terminate()
+          clients.delete(c)
+          return
+        }
+        c.isAlive = false
+        c.ping(() => {})
+      } catch (e) {
+        try { c.terminate() } catch (er) { /* ignore */ }
+        clients.delete(c)
+      }
+    })
+  }, 30000)
+
   const port = parseInt(process.env.PORT, 10) || 5000
   const host = '0.0.0.0'
   server.listen(port, host, (err) => {
     if (err) throw err
     console.log(`> Ready on http://${host}:${port}`)
+  })
+  server.on('close', () => {
+    clearInterval(heartbeatInterval)
   })
 })

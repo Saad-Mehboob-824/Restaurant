@@ -66,18 +66,18 @@ export default function POSProductCard({ product }) {
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-48 object-cover"
+          className="w-full h-32 sm:h-40 lg:h-48 object-cover"
         />
 
-        <div className="p-4">
-          <h3 className="font-semibold text-lg mb-1 text-neutral-900">{product.name}</h3>
-          <p className="text-sm mb-3 text-neutral-600">{product.description}</p>
+        <div className="p-3 sm:p-4">
+          <h3 className="font-semibold text-sm sm:text-base lg:text-lg mb-1 text-neutral-900 line-clamp-2">{product.name}</h3>
+          <p className="text-xs sm:text-sm mb-2 sm:mb-3 text-neutral-600 line-clamp-2">{product.description}</p>
 
           <div className="flex items-center justify-between">
-            <span className="text-xl font-semibold text-neutral-900">Rs {product.price}</span>
+            <span className="text-lg sm:text-xl font-semibold text-neutral-900">Rs {product.price}</span>
             <button
               onClick={handleAddClick}
-              className="px-4 py-2 bg-neutral-900 text-white rounded-lg text-sm font-medium transition-all hover:bg-neutral-800"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-neutral-900 text-white rounded-lg text-xs sm:text-sm font-medium transition-all hover:bg-neutral-800"
             >
               Add
             </button>

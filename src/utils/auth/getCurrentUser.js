@@ -8,19 +8,32 @@ export function getCurrentUser() {
   if (typeof window === 'undefined') return null;
   
   try {
-    // Get token from cookies
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(c => c.trim().startsWith('token='));
-    
-    if (!tokenCookie) {
-      console.warn('No token cookie found');
-      return null;
+    // Try to get token from HttpOnly cookie first
+    let token = null
+    try {
+      const cookies = document.cookie ? document.cookie.split(';') : [];
+      const tokenCookie = cookies.find(c => c.trim().startsWith('token='));
+      if (tokenCookie) {
+        token = tokenCookie.split('=')[1];
+      }
+    } catch (e) {
+      console.warn('Error reading document.cookie', e);
     }
-    
-    const token = tokenCookie.split('=')[1];
-    
+
+    // If cookie is not present (HttpOnly), fallback to localStorage-stored token
     if (!token) {
-      console.warn('Token cookie is empty');
+      try {
+        token = localStorage.getItem('token') || null;
+        if (token) {
+          // note: this token is stored client-side as a fallback
+        }
+      } catch (e) {
+        console.warn('Unable to read token from localStorage', e);
+      }
+    }
+
+    if (!token) {
+      console.warn('No token found in cookies or localStorage');
       return null;
     }
     

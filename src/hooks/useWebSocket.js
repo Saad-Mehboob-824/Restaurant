@@ -48,8 +48,8 @@ export function useWebSocket(onMessage, options = {}) {
     try {
       const isSecure = window.location.protocol === 'https:'
       const protocol = isSecure ? 'wss:' : 'ws:'
-      // Use the same host and port as the main application
-      const wsUrl = `${protocol}//${window.location.host}/api/ws`
+      // Connect to standalone WebSocket server on port 3002
+      const wsUrl = isSecure ? 'wss://shelter-kits-meets-why.trycloudflare.com/' : 'ws://shelter-kits-meets-why.trycloudflare.com/'
 
       console.debug('[useWebSocket] creating global socket ->', wsUrl)
       const ws = new WebSocket(wsUrl)

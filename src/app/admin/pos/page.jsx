@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
-import ProductSidebar from "@/components/Menu/ProductSidebar";
+import ProductSidebar from "@/components/POS/ProductSidebar";
 import POSProductGrid from "@/components/POS/POSProductGrid";
 import POSOverlay from "@/components/POS/POSOverlay";
 import { isAuthenticated } from "@/utils/auth/getCurrentUser";
@@ -13,15 +13,25 @@ export default function POSPage() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const sectionRefs = useRef({});
   const gridRef = useRef(null);
 
   // Check authentication
   useEffect(() => {
-    if (!isAuthenticated()) {
-      window.location.href = '/84588878l00o00g00i00n76580982';
-    }
+    const checkAuth = () => {
+      if (!isAuthenticated()) {
+        window.location.href = '/84588878l00o00g00i00n76580982?redirect=/admin/pos';
+      } else {
+        setAuthChecked(true);
+      }
+    };
+
+    // Small delay to ensure token cookie is available
+    const timer = setTimeout(checkAuth, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   // Fetch categories
@@ -92,6 +102,14 @@ export default function POSPage() {
     return () => observer.disconnect();
   }, [categories, gridRef]);
 
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-neutral-500">Checking authentication...</div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
@@ -103,13 +121,13 @@ export default function POSPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-neutral-900 text-white border-b border-neutral-800">
+      <header className="sticky top-0 z-30 bg-white text-black border-b border-neutral-300">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => window.location.href = '/admin'}
-                className="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 transition-colors"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-lg border-2 border-neutral-700 bg-white hover:bg-neutral-700 transition-colors"
                 aria-label="Back to admin"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -132,7 +150,7 @@ export default function POSPage() {
                   window.location.href = '/84588878l00o00g00i00n76580982'
                 }
               }}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium text-sm hover:bg-red-700 transition-colors"
+              className="px-4 py-2 bg-red-100 text-red-600 border border-red-600 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors"
             >
               Logout
             </button>
@@ -141,15 +159,16 @@ export default function POSPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex h-[calc(100vh-5rem)]">
-        {/* Left: Categories Sidebar */}
-        <div className="w-64 bg-white border-r border-neutral-200 overflow-auto">
+      <div className="flex h-[calc(100vh-5rem)] flex-col lg:flex-row">
+        {/* Left: Categories Sidebar - Hidden on mobile, visible on lg */}
+        <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block lg:w-56 xl:w-64 bg-white border-r border-neutral-200 overflow-auto transition-all`}>
           <ProductSidebar
             categories={categories}
             selectedCategory={selectedCategory}
             onSelect={(id) => {
               setSelectedCategory(id);
               sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth" });
+              setSidebarOpen(false); 
             }}
             onCategoryAdded={(newCat) => {
               setCategories((prev) => [...prev, newCat]);
@@ -168,7 +187,7 @@ export default function POSPage() {
         </div>
 
         {/* Middle: Product Grid */}
-        <div ref={gridRef} className="flex-1 overflow-auto px-6 py-6 bg-neutral-50">
+        <div ref={gridRef} className="flex-1 overflow-auto px-4 sm:px-6 py-6 bg-neutral-50">
           {loading ? (
             <div className="text-center py-12 text-neutral-500">
               <div className="text-4xl mb-3">⏳</div>
@@ -183,7 +202,7 @@ export default function POSPage() {
           )}
         </div>
 
-        {/* Right: POS Overlay */}
+        {/* Right: POS Overlay - Responsive width */}
         <POSOverlay products={items} />
       </div>
     </div>

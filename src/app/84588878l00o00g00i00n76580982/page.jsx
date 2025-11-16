@@ -1,13 +1,21 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [redirectUrl, setRedirectUrl] = useState('/admin')
+
+  useEffect(() => {
+    // Get the redirect URL from search params, default to /admin
+    const redirect = searchParams.get('redirect') || '/admin'
+    setRedirectUrl(redirect)
+  }, [searchParams])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -34,9 +42,16 @@ export default function LoginPage() {
       // Store user info in localStorage
       localStorage.setItem('userRole', data.role)
       localStorage.setItem('userName', `${data.firstName} ${data.lastName}`)
+      // Persist token client-side as a fallback for client-only checks
+      // The server also sets an HttpOnly cookie named `token` for requests.
+      try {
+        if (data.token) localStorage.setItem('token', data.token)
+      } catch (e) {
+        console.warn('Unable to persist token to localStorage', e)
+      }
 
-  // Force a hard navigation to the admin page
-  window.location.href = '/admin'
+      // Force a hard navigation to the redirect URL
+      window.location.href = redirectUrl
     } catch (err) {
       console.error('Login error:', err)
       setError(err.message || 'Login failed. Please try again.')

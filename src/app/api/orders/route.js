@@ -91,6 +91,8 @@ export async function POST(req) {
     // Items should now have menuItemId (ObjectId) instead of menuItem (string name)
     const orderType = (body.orderType || body.type || 'delivery')
     const orderPayload = {
+      // Preserve userId if provided (POS sends userId)
+      userId: body.userId || body.user || undefined,
       // Customer object will be built in createOrder from these fields
       name: body.customerName || body.name || body.customer?.name || '',
       phone: body.phone || body.customer?.phone || '',

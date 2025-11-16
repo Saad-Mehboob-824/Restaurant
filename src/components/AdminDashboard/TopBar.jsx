@@ -18,15 +18,6 @@ export default function TopBar({ onOpenSidebar, isDesktop = true }) {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <div className="relative hidden sm:block">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-2.5 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
-          <input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="Search orders, customers..." className="pl-9 pr-3 h-9 w-64 bg-white border border-neutral-200 rounded-md text-sm placeholder:text-neutral-400 outline-none focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 text-neutral-700" />
-        </div>
-
-        <button className="inline-flex items-center gap-2 h-9 px-3 rounded-md bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 text-neutral-700 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
-          <span className="text-sm">Import</span>
-        </button>
         <button className="inline-flex items-center justify-center h-9 w-9 rounded-md bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 text-neutral-700 transition-colors" aria-label="Notifications">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
         </button>

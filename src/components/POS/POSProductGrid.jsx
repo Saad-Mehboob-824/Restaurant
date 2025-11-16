@@ -19,17 +19,17 @@ export default function POSProductGrid({ categories, items, sectionRefs }) {
             key={cat._id}
             ref={(el) => (sectionRefs.current[cat._id] = el)}
             data-category={cat._id}
-            className="mb-8"
+            className="mb-6 sm:mb-8"
           >
-            <h2 className="text-xl font-semibold mb-4 text-neutral-900">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-neutral-900">
               {cat.name}
             </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
               {filtered.map((item) => (
                 <POSProductCard key={item._id} product={item} />
               ))}
             </div>
-            <hr className="mt-6 border-neutral-200" />
+            <hr className="mt-4 sm:mt-6 border-neutral-200" />
           </div>
         );
       })}
